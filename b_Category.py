@@ -1,43 +1,28 @@
+import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
-from matplotlib import pyplot as plt
+import seaborn as sns
 
+# Read data
 data = pd.read_csv('data/nobel.csv')
+# Create column 'decade' from 'year'
 data['decade'] = data['year'].apply(lambda x: np.floor(x / 10) * 10)
+# Drop where 'sex' is n/a
 data.dropna(subset=['sex'], inplace=True)
 
-total_category = data.loc[:, ['decade', 'category']]
-total_category = data.groupby(['decade', 'category']).size().reset_index(name='total_count')
+# Calculation
+data['male_count'] = data['sex'] == 'Male'
+data = data.groupby(['decade', 'category'], as_index=False)['male_count'].mean()
+data['female_count'] = 1 - data['male_count']
 
-gender_count_category = data.loc[:, ['decade', 'category', 'sex']]
-gender_count_category = data.groupby(['decade', 'category', 'sex']).size().reset_index(name='gender_count')
+print(data)
 
-category = pd.merge(gender_count_category, total_category, on=['decade', 'category'])
-category['percent'] = category['gender_count'] / category['total_count']
-
-female_total = category.loc[category['sex'] == 'Female', ['decade', 'category', 'percent']]
-male_total = category.loc[category['sex'] == 'Male', ['decade', 'category', 'percent']]
-
-female_total = female_total.pivot(index='decade', columns='category', values='percent')
-male_total = male_total.pivot(index='decade', columns='category', values='percent')
-
-female_total.fillna(0, inplace=True)
-male_total.fillna(0, inplace=True)
-
-print(female_total)
-print(male_total)
-
-fig, ax = plt.subplots(nrows=2, ncols=1)
-fig.set_figheight(10)
-fig.set_figwidth(10)
-
-ax[0].plot()
-ax[1].plot()
-
-ax_female = female_total.plot(ax=ax[0])
-ax_male = male_total.plot(ax=ax[1])
-
-ax_female.set(xlabel='decade', ylabel='female_winner')
-ax_male.set(xlabel='decade', ylabel='male_winner')
-
+# Visualized
+sns.set()
+fig, ax = plt.subplots(1, 2, figsize=(15, 5))
+fig.suptitle('What is the gender of a typical Nobel Prize winner?')
+sns.lineplot(x=data["decade"], y=data["female_count"], hue=data["category"], ax=ax[0])
+sns.lineplot(x=data["decade"], y=data["male_count"], hue=data["category"], ax=ax[1])
+ax[0].set_title('Female')
+ax[1].set_title('Male')
 plt.show()
