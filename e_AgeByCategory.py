@@ -1,23 +1,22 @@
 import pandas as pd
-from matplotlib import pyplot as plt
+import seaborn as sns
+import matplotlib.pyplot as plt
 
+# Read data
 data = pd.read_csv('data/nobel.csv')
-
+# Drop row have None(N/a) on column 'birth_date'
 data.dropna(subset=['birth_date'], inplace=True)
-data['year_birthday'] = data['birth_date'].transform(lambda x: str(x)[0:4])
-data.loc[:, 'year_birthday'] = pd.to_numeric(data.loc[:, 'year_birthday'])
-data['year_old'] = data['year'] - data['year_birthday']
+
+# Create column 'year_old'
+data['year_old'] = data['year'] - pd.to_numeric(data['birth_date'].transform(lambda x: str(x)[0:4]))
+
 data = data.loc[:, ['year', 'year_old', 'category']]
-data = pd.pivot_table(data, index=['year'], columns='category', values='year_old')
-data = data.reset_index()
 
-columns = data.columns.drop(data.columns[0])
-
-fig, ax = plt.subplots(nrows=6, ncols=1)
-i = 0
-for x in columns:
-    ax[i].plot()
-    data.loc[:, ['year', x]].plot.scatter(x='year', y=x, ax=ax[i])
-    i += 1
-
+# Visualized
+# Setting the plotting theme
+sns.set()
+# and setting the size of all plots.
+plt.rcParams['figure.figsize'] = [11, 7]
+g = sns.relplot(data=data, x="year", y="year_old", row="category")
+g.set_axis_labels("year_old", "year")
 plt.show()
