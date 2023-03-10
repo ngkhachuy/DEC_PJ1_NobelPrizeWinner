@@ -26,6 +26,8 @@ plt.rcParams['figure.figsize'] = [11, 7]
 # Plotting USA born winners
 ax = sns.lineplot(x='decade', y='usa_born_winner', data=nobel)
 
+print(nobel.info())
+
 # Adding %-formatting to the y-axis
 from matplotlib.ticker import PercentFormatter
 ax.yaxis.set_major_formatter(PercentFormatter(1.0))

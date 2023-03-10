@@ -1,30 +1,27 @@
 import pandas as pd
 import numpy as np
+import seaborn as sns
 from matplotlib import pyplot as plt
+from matplotlib.ticker import PercentFormatter
 
 # Read data
 data = pd.read_csv('data/nobel.csv')
-
 # Create column 'decade' from 'year'
-data['decade'] = data['year'].apply(lambda x: np.floor(x / 10) * 10)
+data['decade'] = data['year'].apply(lambda x: np.floor(x / 10) * 10).astype(int)
+# Create column 'usa_birth' from 'birth_country'
+data['usa'] = data['birth_country'] == 'United States of America'
+data['total'] = 1
 
-# Filter only winner from USA
-usa_winner = data.loc[data['birth_country'] == 'United States of America', ['decade']]
-usa_winner = usa_winner.groupby('decade').size().reset_index(name="USA_count")
+# Calculate %
+df = data.groupby(['decade'], as_index=False)['usa', 'total'].sum()
+df['percent'] = data['usa'] / data['total']
+df = pd.melt(df, id_vars=['decade'], value_vars=['usa', 'total'], var_name='where', value_name='count')
 
-# Filter winner are not from USA
-total_winner = data.loc[:, ['decade']]
-total_winner = total_winner.groupby('decade').size().reset_index(name="total_count")
-
-# merge two dataframe
-usa_dominance = pd.merge(usa_winner, total_winner, on='decade')
-
-# Get 'dominance' of USA
-usa_dominance['dominance'] = usa_dominance['USA_count'] / usa_dominance['total_count']
-
-print(usa_dominance.to_string())
-ax = usa_dominance.plot(x='decade', y='dominance')
-ax.fill_between(usa_dominance['decade'], usa_dominance['dominance']+0.1, usa_dominance['dominance']-0.1, alpha=0.2)
-ax.set(xlabel='decade', ylabel='usa_born_winner')
-ax.grid()
+sns.set()
+fig, ax = plt.subplots(1, 2, figsize=(18, 7))
+fig.suptitle('USA dominance')
+plt.rcParams['figure.figsize'] = [11, 7]
+sns.lineplot(x='decade', y='usa', data=data, ax=ax[0])
+sns.barplot(x='decade', y='count', hue='where', data=df, ax=ax[1])
+ax[0].yaxis.set_major_formatter(PercentFormatter(1.0))
 plt.show()
